@@ -1,0 +1,9 @@
+{
+  "extends": ["plugin:vue/base"],
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "rules": {
+    "quotes": ["off", "single"]
+  }
+}
