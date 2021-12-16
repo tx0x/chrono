@@ -24,7 +24,7 @@
       <div class="d-flex">
         <v-btn dark x-large
             @click="login"
-            class="flex-fill point-btn"
+            class="flex-fill point-btn login-btn"
             color="pointyellow"
             :disabled="!password"
             tabindex="3"
@@ -36,10 +36,8 @@
 </template>
 
 <script>
-import bg from "@/api/background"
 import keccak256 from "keccak256"
 import InitiateHeader from "@/components/InitiateHeader";
-import {ACCOUNTS} from "@/constants/constants";
 
 const ethers = require("ethers")
 
@@ -60,7 +58,7 @@ export default {
     async created() {
     },
     mounted() {
-        document.querySelector('#password-input').focus()
+        document.querySelector('#password-input')?.focus()
     },
     methods: {
         async login() {
@@ -68,8 +66,8 @@ export default {
             try {
                 if (this.password) {
                     let passphrase = keccak256(this.password).toString('hex')
-                    if (await bg.isValidPassphrase(passphrase)) {
-                        await bg.setPassphrase(passphrase)
+                    if (await this.$store.dispatch('Account/isValidPassphrase', passphrase)) {
+                        await this.$store.dispatch('Account/setPassphrase', passphrase)
                         await this.$store.dispatch('Account/loadAccounts')
                         this.$router.replace({name: 'index'}).catch(() => {})
                     } else {

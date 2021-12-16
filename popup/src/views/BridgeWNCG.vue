@@ -28,7 +28,7 @@
         <v-row class="px-6">
           <v-col cols="4" class="pb-0 text-left">{{t('balance')}}</v-col>
           <v-col class="py-0 text-left">
-            <v-text-field color="grey" style="color: grey" outlined dark dense readonly :placeholder="!balanceLoading && balance || ''" :loading="balanceLoading">
+            <v-text-field color="grey" style="color: grey" outlined dark dense readonly :placeholder="ncgBalancePlaceholder" :loading="balanceLoading">
               <template v-slot:append><span class="mt-1">NCG</span></template>
             </v-text-field>
           </v-col>
@@ -53,7 +53,7 @@
     <div class="pb-10 px-8">
       <div class="d-flex">
         <v-btn dark x-large
-               class="flex-fill point-btn"
+               class="flex-fill point-btn confirm-btn"
                color="pointyellow"
                tabindex="3"
                :disabled="!isValidInput"
@@ -102,7 +102,7 @@
 
         <v-card-actions class="mt-8 px-8 fixed-bottom">
           <v-btn color="secondary" class="flex-fill" @click="confirmDialog = false" :disabled="loading">{{t('cancel')}}</v-btn>
-          <v-btn color="pointyellow" class="point-btn flex-fill" @click="bridgeWNCG" :loading="loading">{{t('doBridge')}}</v-btn>
+          <v-btn color="pointyellow" class="point-btn flex-fill send-btn" @click="bridgeWNCG" :loading="loading">{{t('doBridge')}}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -139,6 +139,9 @@ export default {
         },
         receiverRule() {
             return [rule.required, rule.address]
+        },
+        ncgBalancePlaceholder() {
+            return String(!this.balanceLoading && this.balance || '')
         }
 
     },
@@ -158,11 +161,7 @@ export default {
     methods: {
         async confirmSend() {
             if (this.$refs['sendForm'].validate()) {
-                this.amount
-                this.receiver
                 this.nonce = await bg.wallet.nextNonce()
-
-                console.log('next nonce', this.nonce)
                 this.confirmDialog = true
             }
         },

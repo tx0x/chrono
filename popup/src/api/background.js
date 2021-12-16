@@ -1,8 +1,7 @@
-const send = chrome.runtime.sendMessage
 const callBackground = function(action, method, params = []) {
     return new Promise((resolve, reject) => {
         try {
-            send({
+            chrome.runtime.sendMessage({
                 action,
                 method,
                 params:Array.isArray(params) ? params : [params]

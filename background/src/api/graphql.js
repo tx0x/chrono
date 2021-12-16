@@ -5,7 +5,6 @@ const MAINNET_ENDPOINTS = [
     'https://mercury2.9cscan.com/graphql/',
     'https://d131807iozwu1d.cloudfront.net/graphql/'
 ]
-window.networkInterval = 0
 export default class Graphql {
     constructor() {
         this.updateNetwork()
@@ -15,7 +14,7 @@ export default class Graphql {
         return this.canCall.indexOf(method) >= 0
     }
 
-    updateNetwork(network = 'mainnet') {
+    async updateNetwork(network = 'mainnet') {
         let endpoints = null
         if (network === 'mainnet') {
             endpoints = MAINNET_ENDPOINTS
@@ -24,7 +23,7 @@ export default class Graphql {
                 this.endpoints = [...endpoints]
             }
 
-            this.updateEndpoints(endpoints)
+            await this.updateEndpoints(endpoints)
         } else {
             throw 'Unknown Network ' + network
         }
@@ -50,7 +49,6 @@ export default class Graphql {
         }
 
         this.endpoints = endpoints.filter(ep => eps.indexOf(ep) >= 0)
-        console.log(endpoints)
     }
 
     async callEndpoint(fn) {
@@ -76,7 +74,7 @@ export default class Graphql {
             data: {
                 "variables":{"offset": 0},
                 "query":`
-                  query getBlock($offset: Int!) {
+                  query getLastBlockIndex($offset: Int!) {
                     chainQuery {
                       blockQuery {
                         blocks(offset: $offset, limit: 1, desc:true) {
@@ -99,7 +97,7 @@ export default class Graphql {
                 data: {
                     "variables":{"address": address},
                     "query":`
-                  query getAgent($address: Address!) {
+                  query getBalance($address: Address!) {
                     goldBalance(address: $address)
                   }
                 `
@@ -118,7 +116,7 @@ export default class Graphql {
                 data: {
                     "variables": {"publicKey": publicKey, "plainValue": plainValue},
                     "query": `
-                      query query($publicKey: String!, $plainValue: String!) {
+                      query unsignedTx($publicKey: String!, $plainValue: String!) {
                         transaction {
                           createUnsignedTx(publicKey: $publicKey, plainValue: $plainValue)
                         }
@@ -138,7 +136,7 @@ export default class Graphql {
                 data: {
                     "variables": {unsignedTx, signature: base64Sign},
                     "query": `
-                      query query($unsignedTx: String!, $signature: String!) {
+                      query attachSignature($unsignedTx: String!, $signature: String!) {
                         transaction {
                           attachSignature(unsignedTransaction: $unsignedTx, signature: $signature)
                         }
@@ -176,7 +174,7 @@ export default class Graphql {
                 data: {
                     "variables": {address},
                     "query": `
-                      query activation($address: Address!) {
+                      query getActivationStatus($address: Address!) {
                           activationStatus {
                             addressActivated(address: $address)
                           }

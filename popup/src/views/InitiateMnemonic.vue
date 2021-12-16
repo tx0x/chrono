@@ -67,6 +67,8 @@
 
 <script>
 import InitiateHeader from "@/components/InitiateHeader";
+import _ from "underscore"
+
 const ethers = require("ethers")
 
 export default {

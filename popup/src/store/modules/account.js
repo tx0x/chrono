@@ -83,6 +83,12 @@ export default {
         async getPrivateKey({state}, {address, passphrase}) {
             return await bg.wallet.getPrivateKey(address, passphrase)
         },
+        async isValidPassphrase({state}, passphrase) {
+            return await bg.isValidPassphrase(passphrase)
+        },
+        async setPassphrase({state}, passphrase) {
+            await bg.setPassphrase(passphrase)
+        },
         async initAccounts({state, commit, dispatch}, {address, ew, passphrase}) {
             await bg.setPassphrase(passphrase)
             await bg.storage.clearAll()
@@ -184,9 +190,7 @@ export default {
             }
 
             try {
-                console.log('get balance')
                 let balance = await bg.graphql('getBalance', state.account.address)
-                console.log('get balance', balance)
                 commit('setBalance', balance)
             } catch(e) {
                 console.log(e)

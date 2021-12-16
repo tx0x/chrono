@@ -1,6 +1,4 @@
 import aes256 from "@/utils/aes256"
-import {TXS} from "../../../popup/src/constants/constants";
-import bg from "../../../popup/src/api/background";
 class Storage {
     constructor(passphrase) {
         this.passphrase = passphrase
@@ -20,6 +18,15 @@ class Storage {
             })
         })
     }
+
+    /*
+    Data stored through 'secureSet' can only be accessed by 'secureGet' not 'get'.
+    secureSet can be accessed externally.
+    However, secureGet cannot be accessed from outside and can only be accessed in the background project.
+
+    By separating the logic, signing tasks through wallet are executed only
+    in the background context, and only the results are returned.
+    */
     secureSet(name, value) {
         let _value = aes256.encrypt(JSON.stringify({v:value, secure: true}), this.passphrase)
         this.rawSet(name,  _value)

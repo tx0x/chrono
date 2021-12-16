@@ -53,6 +53,7 @@
 import rules from "@/utils/rules"
 import t from "@/utils/i18n"
 import keccak256 from "keccak256"
+import _ from "underscore"
 import InitiateHeader from "@/components/InitiateHeader";
 
 const ethers = require("ethers")
@@ -92,7 +93,7 @@ export default {
     async created() {
     },
     mounted() {
-        document.querySelector('#password-input').focus()
+        document.querySelector('#password-input')?.focus()
     },
     methods: {
         async initiate() {

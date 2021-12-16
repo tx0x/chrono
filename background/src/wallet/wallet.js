@@ -1,25 +1,17 @@
-import crypto from "crypto";
+import crypto from "crypto"
 import Graphql from "@/api/graphql"
 import Storage from "@/storage/storage"
-import {ENCRYPTED_WALLET} from "@/constants/constants";
-import keccak256 from "keccak256";
-import bg from "../../../popup/src/api/background";
-import {TXS} from "../../../popup/src/constants/constants";
+import {ENCRYPTED_WALLET, TXS} from "@/constants/constants"
+import keccak256 from "keccak256"
 
 const Web3 = require('web3')
 const ethers = require('ethers')
 const eccrypto = require("eccrypto")
-const {encode, decode} = require("bencodex")
-
-const api = new Graphql()
-window.ethers = ethers
-window.eccrypto = eccrypto
-window.w3 = Web3
-window.keccak256 = keccak256
-window.Buffer = Buffer
+const {encode} = require("bencodex")
 
 export default class Wallet {
     constructor(passphrase) {
+        this.api = new Graphql()
         this.storage = new Storage(passphrase)
         this.passphrase = passphrase
         this.canCall = ['createSequentialWallet', 'createPrivateKeyWallet', 'sendNCG', 'bridgeWNCG', 'nextNonce', 'getPrivateKey']
@@ -46,8 +38,11 @@ export default class Wallet {
         let encryptedWalletJson = await this.storage.secureGet(ENCRYPTED_WALLET + address.toLowerCase())
         let wallet = await this.decryptWallet(encryptedWalletJson)
         let message = keccak256(Web3.utils.encodePacked(...data))
-
-        return await eccrypto.sign(this.hexToBuffer(wallet.privateKey), message)
+        return await wallet.signMessage(message)
+    }
+    async validateSignature(signature, data, address) {
+        let message = keccak256(Web3.utils.encodePacked(...data))
+        return ((await ethers.utils.recoverAddress(ethers.utils.hashMessage(message), signature)).toLowerCase() == address.toLowerCase())
     }
     async createSequentialWallet(primaryAddress, index) {
         let primaryEncryptedWalletJson = await this.storage.secureGet(ENCRYPTED_WALLET + primaryAddress.toLowerCase())
@@ -91,7 +86,7 @@ export default class Wallet {
                 sender: this.hexToBuffer(wallet.address)
             }
         };
-        let {transaction:{createUnsignedTx:unsignedTx}} = await api.unsignedTx(encode(plainValue).toString('base64'), this.hexToBuffer(wallet.publicKey).toString('base64'))
+        let {transaction:{createUnsignedTx:unsignedTx}} = await this.api.unsignedTx(encode(plainValue).toString('base64'), this.hexToBuffer(wallet.publicKey).toString('base64'))
         let unsignedTxId = crypto.createHash('sha256').update(unsignedTx, 'base64').digest();
 
         return await new Promise((resolve, reject) => {
@@ -100,8 +95,8 @@ export default class Wallet {
                     try {
                         let sign = sig
                         const base64Sign = sign.toString('base64')
-                        const {transaction: {attachSignature: tx}} = await api.attachSignature(unsignedTx, base64Sign);
-                        const {data:{stageTxV2:txId}, endpoint} = await api.stageTx(tx);
+                        const {transaction: {attachSignature: tx}} = await this.api.attachSignature(unsignedTx, base64Sign);
+                        const {data:{stageTxV2:txId}, endpoint} = await this.api.stageTx(tx);
                         resolve({txId, endpoint})
                     } catch(e) {
                         reject(e)
