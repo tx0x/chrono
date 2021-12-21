@@ -30,6 +30,24 @@ module.exports = function(grunt) {
         cmd: 'cp',
         args: ['-rf', './extension/_locales', './extension/images', './build/']
       },
+      runBg: {
+        cmd: 'npm',
+        args: [
+          'run',
+          'serve',
+          '--prefix',
+          './background/'
+        ]
+      },
+      runPopup: {
+        cmd: 'npm',
+        args: [
+          'run',
+          'serve',
+          '--prefix',
+          './popup/'
+        ]
+      },
       buildBg: {
         cmd: 'npm',
         args: [
@@ -54,5 +72,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-compress');
   grunt.registerTask('clean', ['run:clean', 'run:mkdir']);
   grunt.registerTask('zip', ['compress:build']);
+  grunt.registerTask('popup', ['run:runPopup']);
+  grunt.registerTask('background', ['run:runBg']);
   grunt.registerTask('build', ['clean', 'run:copyManifest', 'run:copyFiles', 'run:buildBg', 'run:buildPopup', 'zip']);
 };
