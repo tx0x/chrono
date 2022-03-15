@@ -93,7 +93,8 @@ export default {
     async created() {
     },
     mounted() {
-        document.querySelector('#password-input')?.focus()
+      let $input = document.querySelector('#password-input')
+      $input && $input.focus()
     },
     methods: {
         async initiate() {

@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 const MAINNET_ENDPOINTS = [
-    'https://mars2.9cscan.com/graphql/',
-    'https://mercury2.9cscan.com/graphql/',
-    'https://d131807iozwu1d.cloudfront.net/graphql/'
+    'https://mars2.9cscan.com/graphql',
+    'https://mercury2.9cscan.com/graphql',
+    'https://d131807iozwu1d.cloudfront.net/graphql'
 ]
 export default class Graphql {
     constructor() {
