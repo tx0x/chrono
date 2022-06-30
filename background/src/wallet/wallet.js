@@ -63,7 +63,7 @@ export default class Wallet {
 
         return {address, encryptedWallet}
     }
-    async _transferNCG(sender, receiver, amount, nonce, memo) {
+    async _transferPNG(sender, receiver, amount, nonce, memo) {
         if (!await this.isValidNonce(nonce)) {
             throw 'Invalid Nonce'
         }
@@ -71,15 +71,15 @@ export default class Wallet {
         let senderEncryptedWallet = await this.storage.secureGet(ENCRYPTED_WALLET + sender.toLowerCase())
         let wallet = await this.decryptWallet(senderEncryptedWallet)
         const plainValue = {
-            type_id: "transfer_asset2",
+            type_id: "TransferAsset",
             values: {
                 amount: [
                     {
-                        decimalPlaces: Buffer.from([0x02]),
-                        minters: [this.hexToBuffer("47d082a115c63e7b58b1532d20e631538eafadde")],
-                        ticker: 'NCG'
+                        decimalPlaces: Buffer.from([0x12]),
+                        minters: [],
+                        ticker: 'PNG'
                     },
-                    Number((amount * 100).toFixed())
+                    Web3.utils.toBN(amount).pow(Web3.utils.toBN(18))
                 ],
                 ...(memo ? { memo } : {}),
                 recipient: this.hexToBuffer(receiver),
@@ -109,7 +109,7 @@ export default class Wallet {
     }
 
     async sendNCG(sender, receiver, amount, nonce) {
-        let {txId, endpoint} = await this._transferNCG(sender, receiver, amount, nonce)
+        let {txId, endpoint} = await this._transferPNG(sender, receiver, amount, nonce)
         let result = {
             id: txId,
             endpoint,
@@ -129,7 +129,7 @@ export default class Wallet {
     }
 
     async bridgeWNCG(sender, receiver, amount, nonce) {
-        let {txId, endpoint} = await this._transferNCG(sender, '0x9093dd96c4bb6b44a9e0a522e2de49641f146223', amount, nonce, receiver)
+        let {txId, endpoint} = await this._transferPNG(sender, '0x9093dd96c4bb6b44a9e0a522e2de49641f146223', amount, nonce, receiver)
         let result = {
             id: txId,
             endpoint,
