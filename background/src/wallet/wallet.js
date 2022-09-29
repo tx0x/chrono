@@ -3,10 +3,11 @@ import Graphql from "@/api/graphql"
 import Storage from "@/storage/storage"
 import {ENCRYPTED_WALLET, TXS} from "@/constants/constants"
 import keccak256 from "keccak256"
+import { createAccount } from "@planetarium/account-raw"
+import { signTransaction } from "@planetarium/sign"
 
 const Web3 = require('web3')
 const ethers = require('ethers')
-const eccrypto = require("eccrypto")
 const {encode} = require("bencodex")
 
 export default class Wallet {
@@ -87,25 +88,11 @@ export default class Wallet {
             }
         };
         let {transaction:{createUnsignedTx:unsignedTx}} = await this.api.unsignedTx(encode(plainValue).toString('base64'), this.hexToBuffer(wallet.publicKey).toString('base64'))
-        let unsignedTxId = crypto.createHash('sha256').update(unsignedTx, 'base64').digest();
 
-        return await new Promise((resolve, reject) => {
-            try {
-                eccrypto.sign(this.hexToBuffer(wallet.privateKey), unsignedTxId).then(async sig => {
-                    try {
-                        let sign = sig
-                        const base64Sign = sign.toString('base64')
-                        const {transaction: {attachSignature: tx}} = await this.api.attachSignature(unsignedTx, base64Sign);
-                        const {data:{stageTxV2:txId}, endpoint} = await this.api.stageTx(tx);
-                        resolve({txId, endpoint})
-                    } catch(e) {
-                        reject(e)
-                    }
-                })
-            } catch(e) {
-                reject(e)
-            }
-        })
+        let account = createAccount(wallet.privateKey);
+        let signedTx = signTransaction(unsignedTx, account);
+        const {data:{stageTxV2:txId}, endpoint} = await this.api.stageTx(signedTx);
+        return {txId, endpoint};
     }
 
     async sendNCG(sender, receiver, amount, nonce) {
