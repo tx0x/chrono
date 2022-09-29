@@ -9,6 +9,8 @@
     "test": "jest --coverage --detectOpenHandles"
   },
   "dependencies": {
+    "@planetarium/account-raw": "file:vendor/account-raw.tgz",
+    "@planetarium/sign": "file:vendor/sign.tgz",
     "axios": "^0.24.0",
     "bencodex": "^0.1.1",
     "core-js": "^3.6.5",
