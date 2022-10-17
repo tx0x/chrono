@@ -134,23 +134,23 @@ export default class Graphql {
     });
   }
 
-  async unsignedTx(plainValue, publicKey) {
+  async unsignedTx(plainValue, publicKey, nonce) {
     return this.callEndpoint(async (endpoint) => {
       let { data } = await axios({
         method: "POST",
         url: endpoint,
         data: {
-          variables: { publicKey: publicKey, plainValue: plainValue },
+          variables: { publicKey: publicKey, plainValue: plainValue, nonce: nonce },
           query: `
-                      query unsignedTx($publicKey: String!, $plainValue: String!) {
+                      query unsignedTx($publicKey: String!, $plainValue: String!, $nonce: number) {
                         transaction {
-                          createUnsignedTx(publicKey: $publicKey, plainValue: $plainValue)
+                          unsignedTransaction(publicKey: $publicKey, plainValue: $plainValue nonce: $nonce)
                         }
                       }
                     `,
         },
       });
-      return data["data"];
+      return data["data"]["transaction"]["unsignedTransaction"];
     });
   }
 
