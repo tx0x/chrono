@@ -30,8 +30,8 @@ export default class Wallet {
         let pendingNonce = await this.storage.get('nonce')
         return pendingNonce == nonce
     }
-    async nextNonce() {
-        let pendingNonce = String(+new Date).concat(Math.random().toFixed(10).replace('.',''))
+    async nextNonce(address) {
+        let pendingNonce = await this.api.getNextTxNonce(address);
         this.storage.set('nonce', pendingNonce)
         return pendingNonce
     }

@@ -159,13 +159,13 @@ export default {
     methods: {
         async confirmSend() {
             if (this.$refs['sendForm'].validate()) {
-                this.nonce = await bg.wallet.nextNonce()
+                this.nonce = await bg.wallet.nextNonce(this.account.address)
                 this.confirmDialog = true
             }
         },
         async sendNCG() {
             this.loading = true
-            let tx = await bg.wallet.sendNCG(this.account.address, this.receiver, this.amount, this.nonce)
+            await bg.wallet.sendNCG(this.account.address, this.receiver, this.amount, this.nonce)
             await this.$store.dispatch('Account/loadTxs')
             this.loading = false
             this.$router.replace({name: 'index'})

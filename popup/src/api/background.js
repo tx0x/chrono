@@ -89,8 +89,8 @@ export default {
         bridgeWNCG: async (sender, receiver, amount, nonce) => {
             return await callWallet('bridgeWNCG', [sender, receiver, amount, nonce])
         },
-        nextNonce: async () => {
-            return await callWallet('nextNonce')
+        nextNonce: async (address) => {
+            return await callWallet('nextNonce', [address])
         },
         makeSignature: async (address, data) => {
             return await callWallet('makeSignature', [address, data])
