@@ -90,7 +90,7 @@ export default class Wallet {
         let {transaction:{createUnsignedTx:unsignedTx}} = await this.api.unsignedTx(encode(plainValue).toString('base64'), this.hexToBuffer(wallet.publicKey).toString('base64'))
 
         let account = createAccount(wallet.privateKey);
-        let signedTx = signTransaction(unsignedTx, account);
+        let signedTx = await signTransaction(unsignedTx, account);
         const {data:{stageTxV2:txId}, endpoint} = await this.api.stageTx(signedTx);
         return {txId, endpoint};
     }
