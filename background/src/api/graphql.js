@@ -135,7 +135,7 @@ export default class Graphql {
     });
   }
 
-  async unsignedTx(plainValue, publicKey, nonce) {
+  async unsignedTx(publicKey, plainValue, nonce) {
     return this.callEndpoint(async (endpoint) => {
       let { data } = await axios({
         method: "POST",
@@ -143,7 +143,7 @@ export default class Graphql {
         data: {
           variables: { publicKey: publicKey, plainValue: plainValue, nonce: nonce },
           query: `
-                      query unsignedTx($publicKey: String!, $plainValue: String!, $nonce: number) {
+                      query unsignedTx($publicKey: String!, $plainValue: String!, $nonce: Long) {
                         transaction {
                           unsignedTransaction(publicKey: $publicKey, plainValue: $plainValue nonce: $nonce)
                         }
@@ -184,12 +184,12 @@ export default class Graphql {
           variables: { payload },
           query: `
                       mutation transfer($payload: String!) {
-                        stageTxV2(payload: $payload)
+                        stageTransaction(payload: $payload)
                       }
                     `,
         },
       });
-      return { data: data["data"], endpoint };
+      return { txId: data["data"]["stageTransaction"], endpoint };
     });
   }
 
