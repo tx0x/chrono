@@ -15,6 +15,7 @@ export default class Graphql {
       "getActivationStatus",
       "getTransactionStatus",
       "getNextTxNonce",
+      "getTransferAsset"
     ];
   }
   canCallExternal(method) {
@@ -154,25 +155,25 @@ export default class Graphql {
     });
   }
 
-  async attachSignature(unsignedTx, base64Sign) {
-    return this.callEndpoint(async (endpoint) => {
-      let { data } = await axios({
-        method: "POST",
-        url: endpoint,
-        data: {
-          variables: { unsignedTx, signature: base64Sign },
-          query: `
-                      query attachSignature($unsignedTx: String!, $signature: String!) {
-                        transaction {
-                          attachSignature(unsignedTransaction: $unsignedTx, signature: $signature)
-                        }
+  async getTransferAsset(sender, receiver, amount){
+  return this.callEndpoint(async (endpoint) => {
+    let { data } = await axios({
+      method: "POST",
+      url: endpoint,
+      data: {
+        variables: { sender: sender, receiver: receiver, amount: amount },
+        query: `
+                    query getTransferAsset($sender: Address!, $receiver: Address!, $amount: String!){
+                      actionQuery {
+                        transferAsset(sender: $sender, recipient: $receiver, currency: NCG, amount: $amount)
                       }
-                    `,
-        },
-      });
-      return data["data"];
+                    }
+                  `,
+      },
     });
-  }
+    return data["data"]["actionQuery"]["transferAsset"];
+  });
+}
 
   async stageTx(payload) {
     return this.callEndpoint(async (endpoint) => {
