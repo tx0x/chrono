@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const MAINNET_ENDPOINTS = [
-  "http://9c-main-rpc-1.nine-chronicles.com/graphql",
-  "https://9c-main-full-state.planetarium.dev/graphql",
-  "https://d131807iozwu1d.cloudfront.net/graphql",
+  "https://9c-main-full-state.nine-chronicles.com/graphql",
+  "https://9c-miner.planetarium.dev/graphql",
+  "https://9c-main-rpc-2.nine-chronicles.com/graphql"
 ];
 export default class Graphql {
   constructor() {
@@ -136,16 +136,21 @@ export default class Graphql {
   }
 
   async unsignedTx(publicKey, plainValue, nonce) {
+    const maxGasPrice = {
+      quantity: 1,
+      ticker: 'Mead',
+      decimalPlaces: 18
+    }
     return this.callEndpoint(async (endpoint) => {
       let { data } = await axios({
         method: "POST",
         url: endpoint,
         data: {
-          variables: { publicKey: publicKey, plainValue: plainValue, nonce: nonce },
+          variables: { publicKey: publicKey, plainValue: plainValue, nonce: nonce, maxGasPrice: maxGasPrice },
           query: `
-                      query unsignedTx($publicKey: String!, $plainValue: String!, $nonce: Long) {
+                      query unsignedTx($publicKey: String!, $plainValue: String!, $nonce: Long, $maxGasPrice: FungibleAssetValueInputType) {
                         transaction {
-                          unsignedTransaction(publicKey: $publicKey, plainValue: $plainValue nonce: $nonce)
+                          unsignedTransaction(publicKey: $publicKey, plainValue: $plainValue nonce: $nonce, maxGasPrice: $maxGasPrice)
                         }
                       }
                     `,

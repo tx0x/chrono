@@ -51,7 +51,7 @@
               </span>
             </div>
             <div style="margin-right: -16px;" class="d-flex align-center">
-              <v-btn text small color="grey" :href="'https://9cscan.tx0x.com/tx/' + tx.id" target="_blank">9cscan<v-icon color="grey" x-small class="ml-1" style="margin-top:3px">mdi-open-in-new</v-icon></v-btn>
+              <v-btn text small color="grey" :href="'https://9cscan.com/tx/' + tx.id" target="_blank">9cscan<v-icon color="grey" x-small class="ml-1" style="margin-top:3px">mdi-open-in-new</v-icon></v-btn>
             </div>
           </div>
           <div class="text-left d-flex align-center mt-1 mb-2" v-if="tx.type=='transfer_asset2'">
