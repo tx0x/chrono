@@ -47,14 +47,14 @@
               </span>
               <span class="tx-type">
                 <span v-if="tx.action === 'bridgeWNCG'">Bridge WNCG</span>
-                <span v-else>{{ tx.type == 'transfer_asset2' ? 'Transfer Asset' : tx.type}}</span>
+                <span v-else>{{ tx.type == 'transfer_asset5' ? 'Transfer Asset' : tx.type}}</span>
               </span>
             </div>
             <div style="margin-right: -16px;" class="d-flex align-center">
               <v-btn text small color="grey" :href="'https://9cscan.com/tx/' + tx.id" target="_blank">9cscan<v-icon color="grey" x-small class="ml-1" style="margin-top:3px">mdi-open-in-new</v-icon></v-btn>
             </div>
           </div>
-          <div class="text-left d-flex align-center mt-1 mb-2" v-if="tx.type=='transfer_asset2'">
+          <div class="text-left d-flex align-center mt-1 mb-2" v-if="tx.type=='transfer_asset5'">
             <v-chip label x-small class="tx-sender">
               {{ shortAddress(tx.data.sender) }}
               <copy-btn :text="tx.data.sender" icon x-small style="margin-right:-8px;"><v-icon x-small color="#999">mdi-content-copy</v-icon></copy-btn>

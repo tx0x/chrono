@@ -4,7 +4,7 @@
     "short_name": "__MSG_appName__",
     "description": "__MSG_appDescription__",
     "homepage_url": "https://9cscan.com",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "default_locale": "en",
     "browser_action": {
         "default_icon": "images/logo.png",

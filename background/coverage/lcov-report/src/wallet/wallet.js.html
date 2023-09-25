@@ -468,7 +468,7 @@ export default class Wallet {
         let senderEncryptedWallet = await this.storage.secureGet(ENCRYPTED_WALLET + sender.toLowerCase())
         let wallet = await this.decryptWallet(senderEncryptedWallet)
         const plainValue = {
-            type_id: "transfer_asset2",
+            type_id: "transfer_asset5",
             values: {
                 amount: [
                     {
@@ -511,7 +511,7 @@ export default class Wallet {
             id: txId,
             endpoint,
             status: 'STAGING',
-            type: 'transfer_asset2',
+            type: 'transfer_asse5',
             timestamp: +new Date,
             signer: sender,
             data: {
@@ -532,7 +532,7 @@ export default class Wallet {
             endpoint,
             status: 'STAGING',
             action: 'bridgeWNCG',
-            type: 'transfer_asset2',
+            type: 'transfer_asset5',
             timestamp: +new Date,
             signer: sender,
             data: {

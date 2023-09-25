@@ -128,7 +128,7 @@ export default class Wallet {
       id: txId,
       endpoint,
       status: "STAGING",
-      type: "transfer_asset2",
+      type: "transfer_asset5",
       timestamp: +new Date(),
       signer: sender,
       data: {
@@ -155,7 +155,7 @@ export default class Wallet {
       endpoint,
       status: "STAGING",
       action: "bridgeWNCG",
-      type: "transfer_asset2",
+      type: "transfer_asset5",
       timestamp: +new Date(),
       signer: sender,
       data: {

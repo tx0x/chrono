@@ -94,19 +94,24 @@ export default {
             await bg.storage.clearAll()
             await bg.storage.set(ACCOUNTS, [{name: 'Account 1', index: 0, address, primary: true}])
             await bg.storage.secureSet(ENCRYPTED_WALLET + address.toLowerCase(), ew)
+            console.log(ACCOUNTS, address, ew, passphrase)
 
             await dispatch('loadAccounts')
             await dispatch('selectAccount', address)
         },
         async createNewAccount({state, commit, dispatch}, name) {
+            console.log('create1')
             await dispatch('assertSignedIn')
             let primaryAccount = await dispatch('getPrimaryAccount')
             let nextIndex = await dispatch('getAccountMaxIndex') + 1
+            console.log('create2')
             let {address, encryptedWallet} = await bg.wallet.createSequentialWallet(primaryAccount.address, nextIndex)
             let accounts = await bg.storage.get(ACCOUNTS)
+            console.log('create3', accounts)
             accounts.push({name, index: nextIndex, address})
             await bg.storage.set(ACCOUNTS, accounts)
             await bg.storage.secureSet(ENCRYPTED_WALLET + address.toLowerCase(), encryptedWallet)
+            console.log('created new account', accounts)
 
             await dispatch('loadAccounts')
             await dispatch('selectAccount', address)
