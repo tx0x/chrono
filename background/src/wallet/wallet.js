@@ -1,14 +1,9 @@
-import crypto from "crypto";
 import Graphql from "@/api/graphql";
 import Storage from "@/storage/storage";
 import { ENCRYPTED_WALLET, TXS } from "@/constants/constants";
-import keccak256 from "keccak256";
-import { createAccount } from "@planetarium/account-raw";
-import { signTransaction } from "@planetarium/sign";
-
-const Web3 = require("web3");
-const ethers = require("ethers");
-const { encode } = require("bencodex");
+import { RawPrivateKey } from "@planetarium/account";
+import { BencodexDictionary, decode, encode } from "@planetarium/bencodex";
+import * as ethers from "ethers";
 
 export default class Wallet {
   constructor(passphrase) {
@@ -47,25 +42,6 @@ export default class Wallet {
     this.storage.set("nonce", pendingNonce);
     return pendingNonce;
   }
-  async sign(address, data) {
-    let encryptedWalletJson = await this.storage.secureGet(
-      ENCRYPTED_WALLET + address.toLowerCase()
-    );
-    let wallet = await this.decryptWallet(encryptedWalletJson);
-    let message = keccak256(Web3.utils.encodePacked(...data));
-    return await wallet.signMessage(message);
-  }
-  async validateSignature(signature, data, address) {
-    let message = keccak256(Web3.utils.encodePacked(...data));
-    return (
-      (
-        await ethers.utils.recoverAddress(
-          ethers.utils.hashMessage(message),
-          signature
-        )
-      ).toLowerCase() == address.toLowerCase()
-    );
-  }
   async createSequentialWallet(primaryAddress, index) {
     let primaryEncryptedWalletJson = await this.storage.secureGet(
       ENCRYPTED_WALLET + primaryAddress.toLowerCase()
@@ -95,12 +71,11 @@ export default class Wallet {
       throw "Invalid Nonce";
     }
 
-    let senderEncryptedWallet = await this.storage.secureGet(
+    const senderEncryptedWallet = await this.storage.secureGet(
       ENCRYPTED_WALLET + sender.toLowerCase()
     );
-    let wallet = await this.decryptWallet(senderEncryptedWallet);
-
-    let unsignedTx = await this.api.unsignedTx(
+    const wallet = this.decryptWallet(senderEncryptedWallet);
+    const utxBytes = Buffer.from(await this.api.unsignedTx(
       wallet.publicKey.slice(2),
       await this.api.getTransferAsset(
         wallet.address,
@@ -108,13 +83,18 @@ export default class Wallet {
         amount.toString()
       ),
       nonce
-    );
+    ), "hex");
 
-    let account = createAccount(wallet.privateKey.slice(2));
+    const account = RawPrivateKey.fromHex(wallet.privateKey.slice(2));
+    const signature = (await account.sign(utxBytes)).toBytes();
+    const utx = decode(utxBytes);
+    const signedTx = new BencodexDictionary([
+      ...utx,
+      [new Uint8Array([0x53]), signature],
+    ]);
+    const encodedHex = Buffer.from(encode(signedTx)).toString("hex");
+    const { txId, endpoint } = await this.api.stageTx(encodedHex);
 
-    let signedTx = await signTransaction(unsignedTx, account);
-    this.api.stageTx(signedTx);
-    const { txId, endpoint } = await this.api.stageTx(signedTx);
     return { txId, endpoint };
   }
 

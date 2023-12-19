@@ -2,7 +2,6 @@ import axios from "axios";
 
 const MAINNET_ENDPOINTS = [
   "https://9c-main-full-state.nine-chronicles.com/graphql",
-  "https://9c-miner.planetarium.dev/graphql",
   "https://9c-main-rpc-2.nine-chronicles.com/graphql"
 ];
 export default class Graphql {
