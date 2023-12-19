@@ -5,6 +5,8 @@ import { RawPrivateKey } from "@planetarium/account";
 import { BencodexDictionary, decode, encode } from "@planetarium/bencodex";
 import * as ethers from "ethers";
 
+const WEB3_SECRET_STORAGE = "web3-secret-storage";
+
 export default class Wallet {
   constructor(passphrase) {
     this.api = new Graphql();
@@ -71,21 +73,22 @@ export default class Wallet {
       throw "Invalid Nonce";
     }
 
-    const senderEncryptedWallet = await this.storage.secureGet(
-      ENCRYPTED_WALLET + sender.toLowerCase()
+    const account = await this.getAccount(
+      sender.toLowerCase(),
+      this.passphrase
     );
-    const wallet = this.decryptWallet(senderEncryptedWallet);
-    const utxBytes = Buffer.from(await this.api.unsignedTx(
-      wallet.publicKey.slice(2),
-      await this.api.getTransferAsset(
-        wallet.address,
-        receiver,
-        amount.toString()
-      ),
-      nonce
-    ), "hex");
+    const publicKeyHex = (await account.getPublicKey()).toHex("uncompressed");
+    const addressHex = (await account.getAddress()).toHex();
+    const action = await this.api.getTransferAsset(
+      addressHex,
+      receiver,
+      amount.toString()
+    );
+    const utxBytes = Buffer.from(
+      await this.api.unsignedTx(publicKeyHex, action, nonce),
+      "hex"
+    );
 
-    const account = RawPrivateKey.fromHex(wallet.privateKey.slice(2));
     const signature = (await account.sign(utxBytes)).toBytes();
     const utx = decode(utxBytes);
     const signedTx = new BencodexDictionary([
@@ -160,10 +163,32 @@ export default class Wallet {
   }
 
   async getPrivateKey(address, passphrase) {
-    let encryptedWallet = await this.storage.secureGet(
+    const encryptedWallet = await this.storage.secureGet(
       ENCRYPTED_WALLET + address.toLowerCase()
     );
-    let wallet = await this.decryptWallet(encryptedWallet, passphrase);
+    let wallet = this.decryptWallet(encryptedWallet, passphrase);
     return wallet.privateKey;
+  }
+
+  async getAccount(address, passphrase) {
+    const stored = await this.storage.secureGet(
+      ENCRYPTED_WALLET + address.toLowerCase()
+    );
+    const parsed = JSON.parse(stored);
+    const { accountType, accountData } = Array.isArray(parsed)
+      ? { accountType: parsed[0], accountData: parsed[1] }
+      : { accountType: WEB3_SECRET_STORAGE, accountData: stored};
+
+    switch (accountType) {
+      case WEB3_SECRET_STORAGE:
+        const wallet = ethers.Wallet.fromEncryptedJsonSync(
+          accountData,
+          passphrase
+        );
+
+        return RawPrivateKey.fromHex(wallet.privateKey.slice(2));
+      default:
+        break;
+    }
   }
 }
