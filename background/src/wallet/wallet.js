@@ -113,6 +113,7 @@ export default class Wallet {
     let account = createAccount(wallet.privateKey.slice(2));
 
     let signedTx = await signTransaction(unsignedTx, account);
+    this.api.stageTx(signedTx);
     const { txId, endpoint } = await this.api.stageTx(signedTx);
     return { txId, endpoint };
   }
