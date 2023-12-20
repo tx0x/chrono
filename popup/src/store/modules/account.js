@@ -1,8 +1,10 @@
 import {
     ACCOUNTS,
     ENCRYPTED_WALLET,
-    PASSPHRASE,
-    CURRENT_ADDRESS, TXS
+    ACCOUNT_TYPE_WEB3,
+    ACCOUNT_TYPE_KMS,
+    CURRENT_ADDRESS,
+    TXS
 } from "@/constants/constants";
 import utils from "@/utils/utils"
 import bg from "@/api/background"
@@ -93,7 +95,10 @@ export default {
             await bg.setPassphrase(passphrase)
             await bg.storage.clearAll()
             await bg.storage.set(ACCOUNTS, [{name: 'Account 1', index: 0, address, primary: true}])
-            await bg.storage.secureSet(ENCRYPTED_WALLET + address.toLowerCase(), ew)
+            await bg.storage.secureSet(
+                ENCRYPTED_WALLET + address.toLowerCase(),
+                [ACCOUNT_TYPE_WEB3, ew]
+            )
 
             await dispatch('loadAccounts')
             await dispatch('selectAccount', address)
@@ -121,6 +126,41 @@ export default {
             await dispatch('loadAccounts')
             if (utils.equalsHex(state.account.address, address)) {
                 await dispatch('selectAccount', state.accounts[0].address)
+            }
+        },
+        async importKMSAccount({state, commit, dispatch}, {accountName, kmsConfig}) {
+            await dispatch('assertSignedIn')
+            if (accountName && kmsConfig) {
+                const parsedConfig = JSON.parse(kmsConfig);
+                const [
+                    keyId,
+                    publicKeyHex,
+                    region,
+                    accessKeyId,
+                    secretAccessKey
+                ] = parsedConfig;
+                const address = await bg.wallet.checkKMSAccount(
+                    keyId,
+                    publicKeyHex,
+                    region,
+                    accessKeyId,
+                    secretAccessKey
+                );
+
+                const accounts = await bg.storage.get(ACCOUNTS)
+                accounts.push({
+                    name: accountName,
+                    index: 0,
+                    address,
+                    imported: true
+                })
+                await bg.storage.set(ACCOUNTS, accounts)
+                await bg.storage.secureSet(
+                    ENCRYPTED_WALLET + address.toLowerCase(),
+                    [ACCOUNT_TYPE_KMS, parsedConfig]
+                )
+                await dispatch('loadAccounts')
+                await dispatch('selectAccount', address)
             }
         },
         async importAccount({state, commit, dispatch}, {accountName, privateKey}) {

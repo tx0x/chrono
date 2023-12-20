@@ -22,6 +22,7 @@
       <v-list-item style="border-top: 1px solid #444;" class="mt-4 pt-2 d-flex" v-if="!onlySelect">
         <v-btn small text color="point" class="flex-fill" @click="addNewAddress">Add New</v-btn>
         <v-btn small text color="point" class="flex-fill" @click="importAddress">Import</v-btn>
+        <v-btn small text color="point" class="flex-fill" @click="importKMSAddress">Import(AWS/KMS)</v-btn>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -68,6 +69,9 @@ export default {
         },
         importAddress() {
             this.$emit('import')
+        },
+        importKMSAddress() {
+            this.$emit('importKMS')
         },
         editAccount(account) {
             this.$emit('edit', account)

@@ -1,11 +1,33 @@
 import Graphql from "@/api/graphql";
 import Storage from "@/storage/storage";
-import { ENCRYPTED_WALLET, TXS } from "@/constants/constants";
+import { ENCRYPTED_WALLET, TXS, ACCOUNT_TYPE_WEB3, ACCOUNT_TYPE_KMS } from "@/constants/constants";
 import { RawPrivateKey } from "@planetarium/account";
 import { BencodexDictionary, decode, encode } from "@planetarium/bencodex";
+import { PublicKey } from "@planetarium/account";
+import { AwsKmsAccount, KMSClient } from "@planetarium/account-aws-kms";
 import * as ethers from "ethers";
 
-const WEB3_SECRET_STORAGE = "web3-secret-storage";
+const _createAwsKmsAccount = (
+  keyId,
+  publicKeyHex,
+  region,
+  accessKeyId,
+  secretAccessKey
+) => {
+  const kmsClient = new KMSClient({
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey
+    }
+  });
+  const publicKey = PublicKey.fromHex(
+    publicKeyHex,
+    publicKeyHex.startsWith("04") ? "uncompressed" : "compressed"
+  );
+
+  return new AwsKmsAccount(keyId, publicKey, kmsClient);
+}
 
 export default class Wallet {
   constructor(passphrase) {
@@ -19,6 +41,7 @@ export default class Wallet {
       "bridgeWNCG",
       "nextNonce",
       "getPrivateKey",
+      "checkKMSAccount",
     ];
   }
   canCallExternal(method) {
@@ -170,23 +193,54 @@ export default class Wallet {
     return wallet.privateKey;
   }
 
+  async checkKMSAccount(
+    keyId,
+    publicKeyHex,
+    region,
+    accessKeyId,
+    secretAccessKey
+  ) {
+    const account = _createAwsKmsAccount(
+      keyId,
+      publicKeyHex,
+      region,
+      accessKeyId,
+      secretAccessKey
+    );
+
+    return (await account.getAddress()).toHex();
+  }
+
   async getAccount(address, passphrase) {
     const stored = await this.storage.secureGet(
       ENCRYPTED_WALLET + address.toLowerCase()
     );
-    const parsed = JSON.parse(stored);
-    const { accountType, accountData } = Array.isArray(parsed)
-      ? { accountType: parsed[0], accountData: parsed[1] }
-      : { accountType: WEB3_SECRET_STORAGE, accountData: stored};
+    const { accountType, accountData } = Array.isArray(stored)
+      ? { accountType: stored[0], accountData: stored[1] }
+      : { accountType: ACCOUNT_TYPE_WEB3, accountData: stored};
 
+    console.log(ACCOUNT_TYPE_KMS);
     switch (accountType) {
-      case WEB3_SECRET_STORAGE:
+      case ACCOUNT_TYPE_WEB3:
         const wallet = ethers.Wallet.fromEncryptedJsonSync(
           accountData,
           passphrase
         );
 
         return RawPrivateKey.fromHex(wallet.privateKey.slice(2));
+
+      case ACCOUNT_TYPE_KMS:
+        const [keyId, publicKeyHex, region, accessKeyId, secretAccessKey]
+          = accountData;
+
+        return _createAwsKmsAccount(
+          keyId,
+          publicKeyHex,
+          region,
+          accessKeyId,
+          secretAccessKey
+        );
+
       default:
         break;
     }

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@planetarium/account": "3.9.2",
+    "@planetarium/account-aws-kms": "^3.9.2",
     "@planetarium/bencodex": "0.2.2",
     "@planetarium/tx": "3.9.2",
     "axios": "^0.24.0",

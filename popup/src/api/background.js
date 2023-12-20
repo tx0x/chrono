@@ -97,6 +97,9 @@ export default {
         },
         getPrivateKey: async (address, passphrase) => {
             return await callWallet('getPrivateKey', [address, passphrase])
+        },
+        checkKMSAccount: async (keyId, publicKeyHex, region, accessKeyId, secretAccessKey) => {
+            return await callWallet('checkKMSAccount', [keyId, publicKeyHex, region, accessKeyId, secretAccessKey]);
         }
     },
 }
