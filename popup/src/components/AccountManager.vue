@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex justify-space-between align-center px-3 py-2" v-if="account">
     <div>
-      <account-selector :accounts="accounts" :account="account" @addNew="openDialog('AddNewAccount')" @import="openDialog('ImportAccount')" @edit="editAccount"></account-selector>
+      <account-selector :accounts="accounts" :account="account" @addNew="openDialog('AddNewAccount')" @import="openDialog('ImportAccount')" @edit="editAccount" @importKMS="openDialog('ImportKMSAccount')"></account-selector>
     </div>
     <div class="hex account-address grey--text d-flex align-center">
       <a class="address-link hex" @click="detail.dialog = true">{{shortAddress(account.address)}}</a>
@@ -39,6 +39,23 @@
           <div>
             <v-btn text small @click="imports.dialog = false" :disabled="imports.loading">{{ t('cancel') }}</v-btn>
             <v-btn small color="pointyellow" @click="importAccount" :loading="imports.loading">{{ t('import') }}</v-btn>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="kmsImports.dialog" dark width="320px">
+      <v-card>
+        <v-card-title>{{ t('importKMSAccount') }}</v-card-title>
+        <v-card-text class="mt-4">
+          <v-text-field maxlength="16" outlined :rules="requiredRule" dense label="Account Name" v-model="kmsImports.accountName" style="margin-bottom:-10px;"></v-text-field>
+          <v-textarea color="pointyellow" :rules="requiredRule" :error-messages="kmsImports.error" class="point-input" filled dense rows="4" label="AWS KMS Config (JSON)" v-model="kmsImports.kmsConfig"></v-textarea>
+        </v-card-text>
+        <v-card-actions class="justify-space-between">
+          <div></div>
+          <div>
+            <v-btn text small @click="kmsImports.dialog = false" :disabled="kmsImports.loading">{{ t('cancel') }}</v-btn>
+            <v-btn small color="pointyellow" @click="importKMSAccount" :loading="kmsImports.loading">{{ t('import') }}</v-btn>
           </div>
         </v-card-actions>
       </v-card>
@@ -120,6 +137,13 @@ export default {
                 privateKey: '',
                 error: null
             },
+            kmsImports: {
+              loading: false,
+              dialog: false,
+              accountName: '',
+              kmsConfig: '',
+              error: null,
+            },
             detail: {
                 dialog: false
             },
@@ -152,6 +176,10 @@ export default {
                 this.imports.accountName = 'Account ' + (this.accounts.length + 1)
                 this.imports.privateKey = ''
                 this.imports.dialog = true
+            } else if (type === 'ImportKMSAccount') {
+                this.kmsImports.accountName = 'Account ' + (this.accounts.length + 1)
+                this.kmsImports.kmsConfig = ''
+                this.kmsImports.dialog = true
             }
         },
         editAccount(account) {
@@ -205,6 +233,24 @@ export default {
                 this.imports.error = 'Invalid Private Key'
             }
             this.imports.loading = false
+        },
+
+        async importKMSAccount() {
+            const accountName = this.kmsImports.accountName.trim()
+            const kmsConfig = this.kmsImports.kmsConfig
+            if (!accountName || !kmsConfig) return
+
+            this.kmsImports.error = null
+            this.kmsImports.loading = true
+
+            try {
+                await this.$store.dispatch('Account/importKMSAccount', { accountName, kmsConfig })
+                this.kmsImports.dialog = false
+            } catch(e) {
+              console.log(e);
+                this.kmsImports.error = "Can't import AWS/KMS account"
+            }
+            this.kmsImports.loading = false
         },
 
         /**

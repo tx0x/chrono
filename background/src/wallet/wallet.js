@@ -1,9 +1,33 @@
 import Graphql from "@/api/graphql";
 import Storage from "@/storage/storage";
-import { ENCRYPTED_WALLET, TXS } from "@/constants/constants";
+import { ENCRYPTED_WALLET, TXS, ACCOUNT_TYPE_WEB3, ACCOUNT_TYPE_KMS } from "@/constants/constants";
 import { RawPrivateKey } from "@planetarium/account";
 import { BencodexDictionary, decode, encode } from "@planetarium/bencodex";
+import { PublicKey } from "@planetarium/account";
+import { AwsKmsAccount, KMSClient } from "@planetarium/account-aws-kms";
 import * as ethers from "ethers";
+
+const _createAwsKmsAccount = (
+  keyId,
+  publicKeyHex,
+  region,
+  accessKeyId,
+  secretAccessKey
+) => {
+  const kmsClient = new KMSClient({
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey
+    }
+  });
+  const publicKey = PublicKey.fromHex(
+    publicKeyHex,
+    publicKeyHex.startsWith("04") ? "uncompressed" : "compressed"
+  );
+
+  return new AwsKmsAccount(keyId, publicKey, kmsClient);
+}
 
 export default class Wallet {
   constructor(passphrase) {
@@ -17,6 +41,7 @@ export default class Wallet {
       "bridgeWNCG",
       "nextNonce",
       "getPrivateKey",
+      "checkKMSAccount",
     ];
   }
   canCallExternal(method) {
@@ -71,21 +96,22 @@ export default class Wallet {
       throw "Invalid Nonce";
     }
 
-    const senderEncryptedWallet = await this.storage.secureGet(
-      ENCRYPTED_WALLET + sender.toLowerCase()
+    const account = await this.getAccount(
+      sender.toLowerCase(),
+      this.passphrase
     );
-    const wallet = this.decryptWallet(senderEncryptedWallet);
-    const utxBytes = Buffer.from(await this.api.unsignedTx(
-      wallet.publicKey.slice(2),
-      await this.api.getTransferAsset(
-        wallet.address,
-        receiver,
-        amount.toString()
-      ),
-      nonce
-    ), "hex");
+    const publicKeyHex = (await account.getPublicKey()).toHex("uncompressed");
+    const addressHex = (await account.getAddress()).toHex();
+    const action = await this.api.getTransferAsset(
+      addressHex,
+      receiver,
+      amount.toString()
+    );
+    const utxBytes = Buffer.from(
+      await this.api.unsignedTx(publicKeyHex, action, nonce),
+      "hex"
+    );
 
-    const account = RawPrivateKey.fromHex(wallet.privateKey.slice(2));
     const signature = (await account.sign(utxBytes)).toBytes();
     const utx = decode(utxBytes);
     const signedTx = new BencodexDictionary([
@@ -160,10 +186,63 @@ export default class Wallet {
   }
 
   async getPrivateKey(address, passphrase) {
-    let encryptedWallet = await this.storage.secureGet(
+    const encryptedWallet = await this.storage.secureGet(
       ENCRYPTED_WALLET + address.toLowerCase()
     );
-    let wallet = await this.decryptWallet(encryptedWallet, passphrase);
+    let wallet = this.decryptWallet(encryptedWallet, passphrase);
     return wallet.privateKey;
+  }
+
+  async checkKMSAccount(
+    keyId,
+    publicKeyHex,
+    region,
+    accessKeyId,
+    secretAccessKey
+  ) {
+    const account = _createAwsKmsAccount(
+      keyId,
+      publicKeyHex,
+      region,
+      accessKeyId,
+      secretAccessKey
+    );
+
+    return (await account.getAddress()).toHex();
+  }
+
+  async getAccount(address, passphrase) {
+    const stored = await this.storage.secureGet(
+      ENCRYPTED_WALLET + address.toLowerCase()
+    );
+    const { accountType, accountData } = Array.isArray(stored)
+      ? { accountType: stored[0], accountData: stored[1] }
+      : { accountType: ACCOUNT_TYPE_WEB3, accountData: stored};
+
+    console.log(ACCOUNT_TYPE_KMS);
+    switch (accountType) {
+      case ACCOUNT_TYPE_WEB3:
+        const wallet = ethers.Wallet.fromEncryptedJsonSync(
+          accountData,
+          passphrase
+        );
+
+        return RawPrivateKey.fromHex(wallet.privateKey.slice(2));
+
+      case ACCOUNT_TYPE_KMS:
+        const [keyId, publicKeyHex, region, accessKeyId, secretAccessKey]
+          = accountData;
+
+        return _createAwsKmsAccount(
+          keyId,
+          publicKeyHex,
+          region,
+          accessKeyId,
+          secretAccessKey
+        );
+
+      default:
+        break;
+    }
   }
 }

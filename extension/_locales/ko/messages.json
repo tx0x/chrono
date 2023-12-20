@@ -116,6 +116,9 @@
    "importPk": {
       "message": "개인키로 가져오기"
    },
+   "importKMSAccount": {
+      "message": "AWS/KMS에서 가져오기"
+   },
    "copy": {
       "message": "복사"
    },

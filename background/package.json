@@ -9,15 +9,16 @@
     "test": "jest --coverage --detectOpenHandles"
   },
   "dependencies": {
+    "@planetarium/account": "3.9.2",
+    "@planetarium/account-aws-kms": "^3.9.2",
+    "@planetarium/bencodex": "0.2.2",
+    "@planetarium/tx": "3.9.2",
     "axios": "^0.24.0",
     "bencodex": "^0.1.1",
     "core-js": "^3.6.5",
     "ethers": "^5.5.1",
     "keccak256": "^1.0.3",
-    "web3": "^1.6.0",
-    "@planetarium/account": "3.9.2",
-    "@planetarium/bencodex": "0.2.2",
-    "@planetarium/tx": "3.9.2"
+    "web3": "^1.6.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~5.0.8",

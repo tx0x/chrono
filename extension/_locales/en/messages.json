@@ -116,6 +116,9 @@
    "importPk": {
       "message": "Import PrivateKey"
    },
+   "importKMSAccount": {
+      "message": "Import AWS/KMS Account"
+   },
    "copy": {
       "message": "Copy"
    },
